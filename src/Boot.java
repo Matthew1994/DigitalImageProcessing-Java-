@@ -36,6 +36,7 @@ class UIFrame implements ActionListener {
 	private JMenu opMenu;
 	private JLabel label;
 	private JPanel jPanel;
+	private JMenu hgMenu;
 	BufferedImage originImage = null;
 	BufferedImage currentImage = null;
 	
@@ -91,6 +92,7 @@ class UIFrame implements ActionListener {
 		menuBar.setLocation(30, 30);
 		menuBar.add(getDocMenu(),null);
 		menuBar.add(getOpMenu(),null);
+		menuBar.add(getHistogramMenu(),null);
 		return menuBar;
 	}
 	
@@ -108,6 +110,131 @@ class UIFrame implements ActionListener {
 		docMenu.add(itemSave);
 		return docMenu;
 	}
+
+	public JMenu getOpMenu() {
+		if (opMenu != null) {
+			return opMenu;
+		}
+		opMenu = new JMenu("操作");
+		opMenu.add(getScaleMenu());
+		opMenu.add(getGrayMenu());
+		opMenu.add(getSmoothMenu());
+		opMenu.add(getSharpenMenu());
+		opMenu.add(getHBFilterMenu());
+		opMenu.add(getOriginalImage());
+		return opMenu;
+	}
+	
+	public JMenuItem getHBFilterMenu() {
+		JMenuItem item = new JMenuItem("高提升滤波");
+		item.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(currentImage != null) {
+					currentImage = HighBoostFilter.HBFilter(currentImage, 40);
+					setJLabel(currentImage);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+			}
+		});
+		return item;
+	}
+	
+	public JMenuItem getSharpenMenu() {
+		JMenuItem item = new JMenuItem("锐化");
+		item.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(currentImage != null) {
+					currentImage = Sharpen.sharpenByMatrix3(currentImage);
+					setJLabel(currentImage);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+			}
+		});
+		return item;
+	}
+	
+	public JMenuItem getSmoothMenu() {
+		JMenuItem item = new JMenuItem("平滑");
+		item.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(currentImage != null) {
+					currentImage = Smooth.averagingFilter(currentImage, 5);
+					setJLabel(currentImage);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+			}
+		});
+		return item;
+	}
+	
+	public JMenuItem getOriginalImage() {
+		JMenuItem item = new JMenuItem("原图");
+		item.addActionListener(new ActionListener() {			
+			public void actionPerformed(ActionEvent e) {
+				if (originImage != null) {
+					currentImage = originImage;
+					setJLabel(currentImage);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+			}
+		});
+		return item;
+	}
+	
+	public JMenu getHistogramMenu() {
+		if (hgMenu != null) {
+			return hgMenu;
+		}
+		hgMenu = new JMenu("直方图");
+		hgMenu.add(getGrayHistogramMenu());
+		hgMenu.add(getHisEquMenu());
+		return hgMenu;
+	}
+	
+	public JMenuItem getGrayHistogramMenu() {
+		JMenuItem item = new JMenuItem("灰度直方图");
+		item.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+				if (currentImage == null) {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+				else {
+				Object[] options = {};
+				JOptionPane.showOptionDialog(null, "", "灰度直方图", 0, 0,
+											new ImageIcon(Histogram.getGrayHistogram(currentImage)), 
+											options, null);
+				}
+			}
+		});
+		return item;
+	}
+	
+	public JMenuItem getHisEquMenu() {
+		JMenuItem item = new JMenuItem("直方图均衡化");
+		item.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (currentImage != null) {
+					currentImage = HistogramEqualization.equalizeHist(currentImage);
+					setJLabel(currentImage);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+			}
+		});
+		return item;
+	}
 	
 	public JMenuItem getScaleMenu() {
 		JMenuItem subMenuForScale = new JMenu("缩放");
@@ -124,8 +251,8 @@ class UIFrame implements ActionListener {
 					int w = Integer.parseInt(s.substring(0, s.indexOf('*')));
 					int h = Integer.parseInt(s.substring(s.indexOf('*')+1,s.length()));
 					try {
-						if (originImage != null) {
-							currentImage = scale.nearestNeighbor(originImage, w, h);
+						if (currentImage != null) {
+							currentImage = scale.nearestNeighbor(currentImage, w, h);
 							setJLabel(currentImage);
 						} else {
 							JOptionPane.showMessageDialog(null, "请打开一张图片!");
@@ -152,8 +279,8 @@ class UIFrame implements ActionListener {
 					int w = Integer.parseInt(s.substring(0, s.indexOf('*')));
 					int h = Integer.parseInt(s.substring(s.indexOf('*')+1,s.length()));
 					try {
-						if (originImage != null) {
-							currentImage = scale.bilinear(originImage, w, h);
+						if (currentImage != null) {
+							currentImage = scale.bilinear(currentImage, w, h);
 							setJLabel(currentImage);
 						} else {
 							JOptionPane.showMessageDialog(null, "请打开一张图片!");
@@ -178,7 +305,7 @@ class UIFrame implements ActionListener {
 	public ActionListener getActionListenerForScale(final String scaleType) {
 		ActionListener al = new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
-				if (originImage != null) {
+				if (currentImage != null) {
 					while(true) {
 						String s = JOptionPane.showInputDialog(null, "输入格式为:宽度*长度", "自定义尺寸", JOptionPane.INFORMATION_MESSAGE);
 						if (s == null)
@@ -194,9 +321,9 @@ class UIFrame implements ActionListener {
 							else {
 								try {
 									if (scaleType == "BL")
-										currentImage = scale.bilinear(originImage, w, h);
+										currentImage = scale.bilinear(currentImage, w, h);
 									else
-										currentImage = scale.nearestNeighbor(originImage, w, h);
+										currentImage = scale.nearestNeighbor(currentImage, w, h);
 									setJLabel(currentImage);
 									break;
 								} catch (IOException e1) {
@@ -228,8 +355,8 @@ class UIFrame implements ActionListener {
 					String s =((JMenuItem) e.getSource()).getText();
 					int level = Integer.parseInt(s);
 					try {
-						if (originImage != null) {
-							currentImage = quantize.setGray(originImage, level);
+						if (currentImage != null) {
+							currentImage = quantize.setGray(currentImage, level);
 							setJLabel(currentImage);
 						} else {
 							JOptionPane.showMessageDialog(null, "请打开一张图片!");
@@ -282,15 +409,6 @@ class UIFrame implements ActionListener {
 		return subMenuForGray;
 	}
 	
-	public JMenu getOpMenu() {
-		if (opMenu != null) {
-			return opMenu;
-		}
-		JMenu opMenu = new JMenu("操作");
-		opMenu.add(getScaleMenu());
-		opMenu.add(getGrayMenu());
-		return opMenu;
-	}
 
 
 
