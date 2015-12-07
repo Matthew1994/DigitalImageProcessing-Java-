@@ -2,6 +2,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -121,8 +122,83 @@ class UIFrame implements ActionListener {
 		opMenu.add(getSmoothMenu());
 		opMenu.add(getSharpenMenu());
 		opMenu.add(getHBFilterMenu());
+		opMenu.add(getDFTJMenu());
+		opMenu.add(getDFTFilterMenu());
 		opMenu.add(getOriginalImage());
 		return opMenu;
+	}
+	
+	public JMenuItem getDFTFilterMenu() {
+		JMenu menu = new JMenu("频域滤波");
+		JMenuItem smooth = new JMenuItem("7*7平滑");
+		JMenuItem sharpen = new JMenuItem("3*3锐化");
+		smooth.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(currentImage != null) {
+					int[][] filter = {{1, 1, 1, 1, 1, 1, 1},
+									   {1, 1, 1, 1, 1, 1, 1}, 
+									   {1, 1, 1, 1, 1, 1, 1},
+									   {1, 1, 1, 1, 1, 1, 1},
+									   {1, 1, 1, 1, 1, 1, 1},
+									   {1, 1, 1, 1, 1, 1, 1},
+									   {1, 1, 1, 1, 1, 1, 1}};
+					currentImage = DFT.filter2d_freq(currentImage, filter);
+					setJLabel(currentImage);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+			}
+		});
+		sharpen.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(currentImage != null) {
+					int[][] filter = {{ -1, -1, -1},
+					 		 		  { -1,  8, -1},
+					 		 		  { -1, -1, -1}};
+					currentImage = DFT.filter2d_freq(currentImage, filter);
+					setJLabel(currentImage);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+			}
+		});
+		menu.add(smooth);
+		menu.add(sharpen);
+		return menu;
+	}
+	
+	public JMenuItem getDFTJMenu() {
+		JMenu menu = new JMenu("傅里叶变换");
+		JMenuItem itemDFT = new JMenuItem("正变换");
+		itemDFT.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(currentImage != null) {
+					currentImage = DFT.dft2d(currentImage, true);
+					setJLabel(currentImage);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+			}
+		});
+		menu.add(itemDFT);
+		
+		JMenuItem itemIDFT = new JMenuItem("反变换");
+		itemIDFT.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(currentImage != null) {
+					currentImage = DFT.dft2d(currentImage, false);
+					setJLabel(currentImage);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+			}
+		});
+		menu.add(itemIDFT);
+		return menu;
 	}
 	
 	public JMenuItem getHBFilterMenu() {
@@ -130,7 +206,7 @@ class UIFrame implements ActionListener {
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if(currentImage != null) {
-					currentImage = HighBoostFilter.HBFilter(currentImage, 40);
+					currentImage = HighBoostFilter.HBFilter(currentImage, 20);
 					setJLabel(currentImage);
 				}
 				else {
@@ -157,12 +233,13 @@ class UIFrame implements ActionListener {
 		return item;
 	}
 	
-	public JMenuItem getSmoothMenu() {
-		JMenuItem item = new JMenuItem("平滑");
-		item.addActionListener(new ActionListener() {
+	public JMenu getSmoothMenu() {
+		JMenu menu = new JMenu("平滑"); 
+		JMenuItem item3 = new JMenuItem("3*3平滑");
+		item3.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				if(currentImage != null) {
-					currentImage = Smooth.averagingFilter(currentImage, 5);
+					currentImage = Smooth.averagingFilter(currentImage, 3);
 					setJLabel(currentImage);
 				}
 				else {
@@ -170,7 +247,34 @@ class UIFrame implements ActionListener {
 				}
 			}
 		});
-		return item;
+		JMenuItem item7 = new JMenuItem("7*7平滑");
+		item7.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(currentImage != null) {
+					currentImage = Smooth.averagingFilter(currentImage, 7);
+					setJLabel(currentImage);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+			}
+		});
+		JMenuItem item11 = new JMenuItem("11*11平滑");
+		item11.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(currentImage != null) {
+					currentImage = Smooth.averagingFilter(currentImage, 11);
+					setJLabel(currentImage);
+				}
+				else {
+					JOptionPane.showMessageDialog(null, "请打开一张图片!");
+				}
+			}
+		});
+		menu.add(item3);
+		menu.add(item7);
+		menu.add(item11);
+		return menu;
 	}
 	
 	public JMenuItem getOriginalImage() {
